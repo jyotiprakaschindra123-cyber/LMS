@@ -4,7 +4,6 @@
   "outputDirectory": "dist",
   "functions": {
     "api/[...path].js": {
-      "runtime": "nodejs22.x",
       "maxDuration": 60,
       "includeFiles": "server/**"
     }

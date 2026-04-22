@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Utkal Reserve hotel management system built with the MERN stack.",
   "main": "server/index.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node --watch server/index.js",
