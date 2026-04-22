@@ -1,0 +1,7 @@
+.run
+.video-analysis
+.video-tools
+tmp-logs
+server-out.log
+server-err.log
+dist

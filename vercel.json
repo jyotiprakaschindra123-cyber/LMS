@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/[...path].js": {
+      "runtime": "nodejs22.x",
+      "maxDuration": 60,
+      "includeFiles": "server/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api($|/)).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
