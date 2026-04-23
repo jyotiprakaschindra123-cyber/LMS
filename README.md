@@ -6,6 +6,8 @@ Utkal Reserve is a full-stack hotel management system built with the MERN stack.
 
 This project was built to mirror a modern hotel booking and operations workflow, including bookings, check-in, checkout, invoicing, room service, housekeeping, admin controls, email notifications, and online payment integration.
 
+Deployment Link -: https://hms-eight-xi.vercel.app/
+
 ## Highlights
 
 - Public hotel website with home, rooms, about, login, and registration flows
