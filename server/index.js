@@ -101,6 +101,7 @@ const signToken = (user) => jwt.sign({ id: user.id || user._id, role: user.role 
 const publicUserFields = 'username email firstName lastName phone address avatar role jobTitle salary experience membershipTier loyaltyPoints createdAt';
 const managedPanelRoles = ['frontdesk', 'guest', 'kitchen', 'housekeeping'];
 const membershipTierSteps = ['Silver', 'Gold', 'Platinum', 'Diamond'];
+const primaryAdminMessage = 'The primary admin account is protected and cannot be deleted or reassigned.';
 
 function membershipTierForPoints(points = 0) {
   const normalizedPoints = Math.max(0, Number(points) || 0);
@@ -127,6 +128,12 @@ async function addLoyaltyPoints(userId, pointsToAdd) {
   user.membershipTier = membershipTierForPoints(user.loyaltyPoints);
   await user.save();
   return user;
+}
+
+async function adminExists(excludeUserId = null) {
+  const filter = { role: 'admin' };
+  if (excludeUserId) filter._id = { $ne: excludeUserId };
+  return Boolean(await User.exists(filter));
 }
 
 function defaultPanelLocks() {
@@ -958,8 +965,13 @@ app.post(
   '/api/admin/staff',
   requireAuth('admin'),
   asyncHandler(async (req, res) => {
+    const role = String(req.body.role || 'frontdesk').trim();
+    if (role === 'admin' && await adminExists()) {
+      return res.status(409).json({ message: 'Only one admin account is allowed in the system.' });
+    }
     const user = await User.create({
       ...req.body,
+      role,
       username: String(req.body.username).toLowerCase().trim(),
       email: String(req.body.email).toLowerCase().trim(),
       password: await bcrypt.hash(String(req.body.password || 'utkal123'), 10)
@@ -972,7 +984,16 @@ app.put(
   '/api/admin/staff/:id',
   requireAuth('admin'),
   asyncHandler(async (req, res) => {
+    const existing = await User.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Staff member not found.' });
     const update = { ...req.body };
+    const nextRole = update.role !== undefined ? String(update.role || '').trim() : existing.role;
+    if (existing.role === 'admin' && nextRole !== 'admin') {
+      return res.status(409).json({ message: primaryAdminMessage });
+    }
+    if (existing.role !== 'admin' && nextRole === 'admin' && await adminExists(existing._id)) {
+      return res.status(409).json({ message: 'Only one admin account is allowed in the system.' });
+    }
     if (update.password) update.password = await bcrypt.hash(String(update.password), 10);
     else delete update.password;
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true }).select(publicUserFields);
@@ -980,7 +1001,18 @@ app.put(
   })
 );
 
-app.delete('/api/admin/staff/:id', requireAuth('admin'), asyncHandler(async (req, res) => res.json({ deleted: Boolean(await User.findByIdAndDelete(req.params.id)) })));
+app.delete(
+  '/api/admin/staff/:id',
+  requireAuth('admin'),
+  asyncHandler(async (req, res) => {
+    const existing = await User.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Staff member not found.' });
+    if (existing.role === 'admin') {
+      return res.status(409).json({ message: primaryAdminMessage });
+    }
+    res.json({ deleted: Boolean(await User.findByIdAndDelete(req.params.id)) });
+  })
+);
 
 app.get('/api/admin/guests', requireAuth('admin', 'frontdesk'), asyncHandler(async (_req, res) => res.json({ guests: await User.find({ role: 'guest' }).select(publicUserFields).sort({ createdAt: -1 }) })));
 app.put(

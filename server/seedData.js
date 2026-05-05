@@ -37,7 +37,7 @@ export async function seedDatabase({ force = false } = {}) {
 
   const password = async (plain) => bcrypt.hash(plain, 10);
   const [adminPass, frontPass, guestPass, kitchenPass, cleanPass] = await Promise.all([
-    password('admin123'),
+    password('hms123'),
     password('front123'),
     password('guest123'),
     password('kitchen123'),
@@ -46,12 +46,12 @@ export async function seedDatabase({ force = false } = {}) {
 
   const users = await User.insertMany([
     {
-      username: 'admin',
-      email: 'admin@utkalreserve.com',
+      username: 'hmsadmin',
+      email: 'admin@gmail.com',
       password: adminPass,
       role: 'admin',
-      firstName: 'Admin',
-      lastName: 'Manager',
+      firstName: 'Head',
+      lastName: 'Admin',
       phone: '+91 70000 11111',
       jobTitle: 'General Manager',
       salary: 90000,

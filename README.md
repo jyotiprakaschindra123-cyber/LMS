@@ -167,7 +167,7 @@ These are seeded demo accounts for local/testing use:
 | Kitchen | `kitchen` | `kitchen123` |
 | Housekeeping | `housekeeper` | `clean123` |
 
-An additional admin can also be created manually if needed.
+The system is intentionally restricted to a single protected admin account.
 
 ## Environment Variables
 
@@ -314,4 +314,3 @@ This project has been customized extensively for:
 ## License
 
 This project is currently provided as a custom implementation. Add your preferred license before public reuse or redistribution.
-

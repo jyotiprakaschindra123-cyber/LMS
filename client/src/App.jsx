@@ -540,6 +540,11 @@ const housekeepingNav = [
   { to: '/housekeeping/history', label: 'Cleaning History', icon: ClipboardList },
   { to: '/housekeeping/profile', label: 'My Profile', icon: UserRound }
 ];
+const staffRoleOptions = [
+  { value: 'frontdesk', label: 'Receptionist' },
+  { value: 'kitchen', label: 'Kitchen Staff' },
+  { value: 'housekeeping', label: 'Housekeeping' }
+];
 
 function navIsActive(item, pathname) {
   const base = item.match || item.to?.split('?')[0];
@@ -2597,6 +2602,7 @@ function StaffManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const selectedStaff = editMode ? data.staff.find((entry) => entry.id === staffId) : null;
+  const adminProtected = selectedStaff?.role === 'admin';
 
   useEffect(() => {
     if (addMode) {
@@ -2757,10 +2763,7 @@ function StaffManagement() {
               <div className="staff-grid staff-grid-2 staff-create-grid">
                 <Field label="Job Role">
                   <select required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value, jobTitle: form.jobTitle || staffRoleLabel(e.target.value) })}>
-                    <option value="frontdesk">Receptionist</option>
-                    <option value="kitchen">Kitchen Staff</option>
-                    <option value="housekeeping">Housekeeping</option>
-                    <option value="admin">Admin Manager</option>
+                    {staffRoleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Monthly Salary ($)">
@@ -2808,6 +2811,7 @@ function StaffManagement() {
           action={<Link className="ghost-button staff-back-button" to="/admin/staff"><ChevronLeft size={16} /> Back to List</Link>}
         />
         {error && <div className="notice danger">{error}</div>}
+        {adminProtected && <div className="notice warning">This is the primary admin account. Its role cannot be changed or deleted.</div>}
         <section className="staff-form-shell">
           <div className="staff-form-strip" />
           <form className="staff-form-stack" onSubmit={submit}>
@@ -2833,11 +2837,10 @@ function StaffManagement() {
               <h2><Briefcase size={18} /> Job & Salary</h2>
               <div className="staff-grid staff-grid-2">
                 <Field label="Job Role">
-                  <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value, jobTitle: form.jobTitle || staffRoleLabel(e.target.value) })}>
-                    <option value="frontdesk">Receptionist</option>
-                    <option value="kitchen">Kitchen Staff</option>
-                    <option value="housekeeping">Housekeeping</option>
-                    <option value="admin">Admin Manager</option>
+                  <select value={form.role} disabled={adminProtected} onChange={(e) => setForm({ ...form, role: e.target.value, jobTitle: form.jobTitle || staffRoleLabel(e.target.value) })}>
+                    {adminProtected
+                      ? <option value="admin">Admin Manager</option>
+                      : staffRoleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                   </select>
                 </Field>
                 <Field label="Salary ($)">
@@ -2910,7 +2913,19 @@ function StaffManagement() {
               <td>{staff.experience}</td>
               <td className="table-actions staff-actions">
                 <button type="button" className="staff-icon-button edit" onClick={() => edit(staff)}><Edit size={15} /></button>
-                <button type="button" className="staff-icon-button delete" onClick={async () => { await api(`/admin/staff/${staff.id}`, { method: 'DELETE' }); load(); }}><Trash2 size={15} /></button>
+                <button
+                  type="button"
+                  className="staff-icon-button delete"
+                  disabled={staff.role === 'admin'}
+                  title={staff.role === 'admin' ? 'Primary admin account cannot be deleted' : 'Delete employee'}
+                  onClick={async () => {
+                    if (staff.role === 'admin') return;
+                    await api(`/admin/staff/${staff.id}`, { method: 'DELETE' });
+                    load();
+                  }}
+                >
+                  <Trash2 size={15} />
+                </button>
               </td>
             </tr>
           ))}
